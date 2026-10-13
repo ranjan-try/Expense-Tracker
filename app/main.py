@@ -40,3 +40,22 @@ def create_user(user_inp: schemas.UserCreate,db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
     return user# response model manage to convert . into json
+
+
+#creating categories...
+
+@app.post("/categories",response_model=schemas.CategoryResponse)
+
+def create_category(category_in: schemas.CategoryCreate,db: Session = Depends(get_db)):
+    user = db.get(models.User,category_in.user_id)
+    if user is None:
+        raise HTTPException(status_code=404,detail="User id not Found")
+
+    existing = db.query(models.Category).filter(models.Category.user_id == category_in.user_id, models.Category.name == category_in.name).first()
+    if existing:
+        raise HTTPException(status_code=409,detail="category already exists")
+    category = models.Category(name=category_in.name,type=category_in.type,user_id=category_in.user_id)
+    db.add(category)
+    db.commit()
+    db.refresh(category)
+    return category
