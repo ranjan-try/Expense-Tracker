@@ -1,0 +1,4 @@
+#adding schemas for the all models 
+#routes for each models 
+#error handelling 
+#learning routers to add and maintain the routes there...(to avoid the too much cluster in the main.py)
