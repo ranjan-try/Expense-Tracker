@@ -39,7 +39,7 @@ def create_user(user_inp: schemas.UserCreate,db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
-    return user# response model manage to convert . into json
+    return user # response model manage to convert . into json
 
 
 #creating categories...
@@ -59,3 +59,26 @@ def create_category(category_in: schemas.CategoryCreate,db: Session = Depends(ge
     db.commit()
     db.refresh(category)
     return category
+
+#creating the transaction 
+
+@app.post("/transactions",response_model=schemas.TransactionResponse)
+def create_transaction(transaction_in: schemas.TransactionCreate, db: Session = Depends(get_db)):
+    user = db.get(models.User,transaction_in.user_id)
+    if user is None:
+        raise HTTPException(status_code=404,detail="user not found")
+    category = db.query(models.Category).filter(models.Category.id == transaction_in.category_id).first()
+    if category is None:
+        raise HTTPException(status_code=404,detail="Category not FOUND")
+    #checking if category matches to the user 
+    if(category.user_id != user.id):
+        raise HTTPException(status_code=403,detail="Category doesn't belong to the User")
+
+    if(category.type != transaction_in.type):
+        raise HTTPException(status_code=400,detail="type Not match Error")
+    
+    transaction = models.Transaction(user_id = transaction_in.user_id,amount = transaction_in.amount,type = transaction_in.type,description = transaction_in.description,category_id = transaction_in.category_id,date = transaction_in.date)
+    db.add(transaction)
+    db.commit()
+    db.refresh(transaction)
+    return transaction

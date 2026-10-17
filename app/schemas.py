@@ -1,5 +1,8 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Literal
+from decimal import Decimal
+import datetime
+
 
 class UserCreate(BaseModel):
     name: str
@@ -21,5 +24,16 @@ class CategoryCreate(BaseModel):
 class CategoryResponse(CategoryCreate):
     id: int
     model_config = ConfigDict(from_attributes=True)
+
+class TransactionCreate(BaseModel):
+    user_id: int
+    category_id: int
+    type: Literal["income","expense"]
+    description: str | None = None
+    amount: Decimal = Field(gt=0)
+    date : datetime.date | None = None
     
+class TransactionResponse(TransactionCreate):
+    id: int
+    model_config = ConfigDict(from_attributes=True)
     
