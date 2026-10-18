@@ -2,6 +2,8 @@ from fastapi import FastAPI,Depends,HTTPException
 from sqlalchemy.orm import Session
 from app.database import Base,engine, get_db
 from app import models,schemas
+from typing import Literal
+from datetime import date
 
 
 Base.metadata.create_all(bind=engine)
@@ -82,3 +84,26 @@ def create_transaction(transaction_in: schemas.TransactionCreate, db: Session = 
     db.commit()
     db.refresh(transaction)
     return transaction
+
+@app.get("/transactions",response_model=list[schemas.TransactionResponse])
+def get_transaction(user_id:int,category_id:int | None = None,start_date: date | None = None,end_date: date | None = None,type: Literal["income","expense"] | None=None,db: Session = Depends(get_db)):
+    user = db.get(models.User,user_id)
+    if user is None:
+        raise HTTPException(status_code=404,detail="user not FOUND")
+    transaction = db.query(models.Transaction).filter(models.Transaction.user_id == user_id)
+    if type is not None:
+        transaction = transaction.filter(models.Transaction.type == type)  
+    
+    if category_id is not None:
+        transaction = transaction.filter(models.Transaction.category_id == category_id)
+
+    #date filter
+    if start_date and end_date and start_date > end_date:
+        raise HTTPException(status_code=400,detail="start_date cant be after end_date")
+    if start_date is not None:
+        transaction = transaction.filter(models.Transaction.date >= start_date)
+    if end_date is not None:
+        transaction = transaction.filter(models.Transaction.date <= end_date)
+    
+    return transaction.all()
+
