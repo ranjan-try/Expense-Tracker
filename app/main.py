@@ -4,14 +4,9 @@ from app.database import Base,engine, get_db
 from app import models,schemas
 from typing import Literal
 from datetime import date
-
-
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
-
-
 #creating users.
-
 @app.get("/users/count")
 def count_users(db: Session = Depends(get_db)):     #depend here is for dependency injection like it tells that before running the function run the function inside it and pass it in the parameter
    count = db.query(models.User).count()
@@ -104,6 +99,42 @@ def get_transaction(user_id:int,category_id:int | None = None,start_date: date |
         transaction = transaction.filter(models.Transaction.date >= start_date)
     if end_date is not None:
         transaction = transaction.filter(models.Transaction.date <= end_date)
+    transaction = transaction.order_by(models.Transaction.date.desc())
     
     return transaction.all()
+
+@app.delete("/transactions/{transaction_id}",status_code=204)
+def delete_transaction(transaction_id: int,db: Session = Depends(get_db)):
+    transaction = db.get(models.Transaction,transaction_id)
+    if transaction is None:
+        raise HTTPException(status_code=404,detail="transaction_id not found")
+
+    db.delete(transaction)
+    db.commit()
+
+    
+
+
+
+
+# @app.delete("/transactions/delete",status_code=204)
+# def delete_transaction(user_id: int, id: int | None = None, category_id: int | None = None,start_date: date | None = None,end_date: date | None = None,db: Session = Depends(get_db)):
+#     if id is not None:
+#         query = db.get(models.Transaction,id)
+    
+#     if query.filter(models.Transaction.user_id == user_id).first() is None:
+#         raise HTTPException(status_code=404,detail="user_id not found in transaction")
+#     query = query.filter(models.Transaction.user_id == user_id)
+#     if category_id is not None:
+#         if query.filter(models.Transaction.category_id == category_id).first() is None:
+#             raise HTTPException(status_code=404,detail="category_id not found in transaction")
+#         query = query.filter(models.Transaction.category_id == category_id)
+
+#     if start_date is not None:
+#         query = query.filter(models.Transaction.date >= start_date)
+#     if end_date is not None:
+#         query = query.filter(models.Transaction.date <= end_date)
+#     db.delete(query)
+#     db.commit()
+
 
