@@ -30,4 +30,9 @@ app/
   main.py, database.py, models.py, schemas.py
 
 ## Roadmap
-(short list of what's next)
+1. Finish the categories endpoints (create, list, update, delete)
+2. Build transactions, which are the core of the app
+3. Add budgets and monthly summaries
+4. Replace the placeholder password with real authentication
+5. Write tests for everything above
+6. Maybe a minimal frontend at the very end, if I still feel like it
