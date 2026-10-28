@@ -57,24 +57,19 @@ def create_category(category_in: schemas.CategoryCreate,db: Session = Depends(ge
     db.refresh(category)
     return category
 
-@app.get("categories/{category_id}",)
+@app.get("/categories",response_model=list[schemas.CategoryResponse])
 
+def get_category(user_id: int,type : Literal["income","expense"] | None = None,db : Session = Depends(get_db)):
+    query = db.query(models.Category)
+    user = db.get(models.User, user_id)
+    if user is None:
+        raise HTTPException(status_code=404,detail="User not Found")
+    query = query.filter(models.Category.user_id == user_id)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    if type is not None:
+        query = query.filter(models.Category.type == type)
+    query = query.order_by(models.Category.name)
+    return query.all()
 
 #block method: We dont wanna allow deletion if there is any transaction associated with the category... //need to review yet
 @app.delete("/categories/{category_id}",status_code=204)
