@@ -112,8 +112,24 @@ def delete_transaction(transaction_id: int,db: Session = Depends(get_db)):
     db.delete(transaction)
     db.commit()
 
+#block method: We dont wanna allow deletion if there is any transaction associated with the category... //need to review yet
+@app.delete("/categories/{category_id}",status_code=204)
+def delete_category(category_id: int,user_id: int, db : Session = Depends(get_db)):
+    category = db.get(models.Category,category_id)
+    if category is None:
+        raise HTTPException(status_code=404,detail="category not found")
+    if category.user_id != user_id:
+        raise HTTPException(status_code=403,detail="category does not belong to this user")
 
-    
+    exist = db.query(models.Transaction).filter(models.Transaction.category_id == category_id).first()
+    if exist is not None:
+        raise HTTPException(status_code=409,detail="category has its transactions")
+
+    db.delete(category)
+    db.commit()
+
+
+
 
 
 
