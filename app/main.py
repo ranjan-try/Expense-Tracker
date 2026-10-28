@@ -57,6 +57,41 @@ def create_category(category_in: schemas.CategoryCreate,db: Session = Depends(ge
     db.refresh(category)
     return category
 
+@app.get("categories/{category_id}",)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#block method: We dont wanna allow deletion if there is any transaction associated with the category... //need to review yet
+@app.delete("/categories/{category_id}",status_code=204)
+def delete_category(category_id: int,user_id: int, db : Session = Depends(get_db)):
+    category = db.get(models.Category,category_id)
+    if category is None:
+        raise HTTPException(status_code=404,detail="category not found")
+    if category.user_id != user_id:
+        raise HTTPException(status_code=403,detail="category does not belong to this user")
+
+    exist = db.query(models.Transaction).filter(models.Transaction.category_id == category_id).first()
+    if exist is not None:
+        raise HTTPException(status_code=409,detail="category has its transactions")
+
+    db.delete(category)
+    db.commit()
+
 #creating the transaction 
 
 @app.post("/transactions",response_model=schemas.TransactionResponse)
@@ -104,29 +139,21 @@ def get_transaction(user_id:int,category_id:int | None = None,start_date: date |
     return transaction.all()
 
 @app.delete("/transactions/{transaction_id}",status_code=204)
-def delete_transaction(transaction_id: int,db: Session = Depends(get_db)):
+def delete_transaction(transaction_id: int,user_id: int,db: Session = Depends(get_db)):
     transaction = db.get(models.Transaction,transaction_id)
     if transaction is None:
         raise HTTPException(status_code=404,detail="transaction_id not found")
-
+    if transaction.user_id != user_id:
+        raise HTTPException(status_code="403",detail="transaction does not belong to the user")
+    
     db.delete(transaction)
     db.commit()
 
-#block method: We dont wanna allow deletion if there is any transaction associated with the category... //need to review yet
-@app.delete("/categories/{category_id}",status_code=204)
-def delete_category(category_id: int,user_id: int, db : Session = Depends(get_db)):
-    category = db.get(models.Category,category_id)
-    if category is None:
-        raise HTTPException(status_code=404,detail="category not found")
-    if category.user_id != user_id:
-        raise HTTPException(status_code=403,detail="category does not belong to this user")
 
-    exist = db.query(models.Transaction).filter(models.Transaction.category_id == category_id).first()
-    if exist is not None:
-        raise HTTPException(status_code=409,detail="category has its transactions")
 
-    db.delete(category)
-    db.commit()
+
+
+
 
 
 
